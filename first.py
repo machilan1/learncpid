@@ -307,6 +307,11 @@ solution_printer = cp_model.ObjectiveSolutionPrinter()
 status = solver.solve(model, solution_printer)
 
 # 答应排班结菜
+
+if status ==cp_model.INFEASIBLE:
+    print("The model is infeasible!!")
+    
+
 if status == cp_model.OPTIMAL or status == cp_model. FEASIBLE:
     print()
     header = '          '
