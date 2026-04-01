@@ -41,7 +41,8 @@ def main():
 
     # Constraints
 
-    # 每條路線至少要走過一次
+    # Set partitioning mode
+    # 每條路線要剛好走一次
     solver.Add(solver.Sum([x[i] for i in [0, 3, 6, 9]]) == 1)
     solver.Add(solver.Sum([x[i] for i in [1, 4, 7, 10]]) == 1)
     solver.Add(solver.Sum([x[i] for i in [2, 5, 8, 11]]) == 1)
@@ -53,6 +54,9 @@ def main():
     solver.Add(solver.Sum([x[i] for i in [4, 7, 10]]) == 1)
     solver.Add(solver.Sum([x[i] for i in [2, 6, 7, 11]]) == 1)
     solver.Add(solver.Sum([x[i] for i in [5, 8, 9, 10, 11]]) == 1)
+
+    # Set covering mode
+    # 每條路線至少要走過一次
     # solver.Add(solver.Sum([x[i] for i in [0, 3, 6, 9]]) >= 1)
     # solver.Add(solver.Sum([x[i] for i in [1, 4, 7, 10]]) >= 1)
     # solver.Add(solver.Sum([x[i] for i in [2, 5, 8, 11]]) >= 1)
