@@ -5,13 +5,13 @@ from ortools.linear_solver import pywraplp
 
 def main():
     # Data
-    projects = [1, 2, 3, 4, 5]
+    projects = [1, 2, 3, 4, 5, 6]
     num_projects = len(projects)
 
-    cost_coeff = [6, 12, 10, 4, 8]
-    profit_coeff = [1, 1.8, 1.6, 0.8, 1.4]
+    cost_coeff = [38, 33, 39, 45, 23, 27]
+    profit_coeff = [15, 12, 16, 18, 9, 11]
 
-    quota = 20
+    quota = 100
 
     # Solver
     # Create the mip solver with the SCIP backend.
@@ -28,9 +28,17 @@ def main():
         x[i] = solver.IntVar(0, 1, "")
 
     # Constraints
-    # 不要花超過quota就好
+    # 不要花超過quota
 
     solver.Add(solver.Sum([x[i] * cost_coeff[i] for i in range(num_projects)]) <= quota)
+
+    # Investment opportunities 1 and 2 are mutually exclusive, and so are 3 and 4.
+    solver.Add(x[0] + x[1] <= 1)
+    solver.Add(x[2] + x[3] <= 1)
+
+    # neither 3 nor 4 can be undertaken unless one of the first two opportunities is undertaken.
+    solver.Add(x[0] + x[1] >= x[2])
+    solver.Add(x[0] + x[1] >= x[3])
 
     # Objective
 
