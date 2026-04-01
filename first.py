@@ -6,20 +6,17 @@ from ortools.linear_solver import pywraplp
 def main():
     # Data
 
-    persons = ["Carl", "Chris", "David", "Tony", "Ken"]
-    strokes = ["backstroke", "breaststroke", "butterfly", "freestyle"]
-    num_persons = len(persons)
-    num_strokes = len(strokes)
+    machines = ["1", "2"]
+    products = ["tow", "stabilizer"]
+    num_machines = len(machines)
+    num_products = len(products)
 
     cost_coeff = [
-        [37.7, 43.4, 33.3, 29.2],
-        [32.9, 33.1, 28.5, 26.4],
-        [33.8, 42.2, 38.9, 29.6],
-        [37.0, 34.7, 30.4, 28.5],
-        [35.4, 41.8, 33.6, 31.1],
+        [3.2, 2.4],
+        [2, 3],
     ]
 
-    quota = 100
+    profit_coeff = [130, 150]
 
     # Solver
     # Create the mip solver with the SCIP backend.
@@ -32,26 +29,26 @@ def main():
     # x[i] is an array of 0-1 variables, which will be 1
     # if worker i is assigned to task j.
     x = {}
-    for i in range(num_persons):
-        for j in range(num_strokes):
-            x[i, j] = solver.IntVar(0, 1, "")
+    infinity = solver.infinity()
+    for i in range(num_machines):
+        for j in range(num_products):
+            x[i, j] = solver.IntVar(0, infinity, "")
 
     # Constraints
-    # 每個式只能有一個人上場
-    for j in range(num_strokes):
-        solver.Add(solver.Sum([x[i, j] for i in range(num_persons)]) == 1)
+    # Machine 1 will be available for 16 hours over the next two days
 
-    # 一個人只頂多只能游一種式
-    for i in range(num_persons):
-        solver.Add(solver.Sum(x[i, j] for j in range(num_strokes)) <= 1)
+    solver.Add(sum(x[0, j] * cost_coeff[0][j] for j in range(num_products)) <= 16)
+
+    # Machine 2 will be available for 15 hours
+    solver.Add(sum(x[1, j] * cost_coeff[1][j] for j in range(num_products)) <= 15)
 
     # Objective
 
     objective_terms = []
-    for i in range(num_persons):
-        for j in range(num_strokes):
-            objective_terms.append(x[i, j] * cost_coeff[i][j])
-    solver.Minimize(solver.Sum(objective_terms))
+    for i in range(num_machines):
+        for j in range(num_products):
+            objective_terms.append(x[i, j] * profit_coeff[j])
+    solver.Maximize(solver.Sum(objective_terms))
 
     # Solve
     print(f"Solving with {solver.SolverVersion()}")
@@ -59,17 +56,14 @@ def main():
 
     # Print solution.
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
-        total_cost = 0
         print(f"Total value = {solver.Objective().Value()}\n")
-        for i in range(num_persons):
-            for j in range(num_strokes):
-                if x[i, j].solution_value() > 0.5:
-                    total_cost += cost_coeff[i][j]
+        for i in range(num_machines):
+            for j in range(num_products):
+                if x[i, j].solution_value() > 0:
                     print(
-                        f"Swimmer {persons[i]} is picked for {strokes[j]}"
-                        + f" Cost: {cost_coeff[i][j]}"
+                        f"Machine {machines[i]} is picked for producing {x[i,j].solution_value()} units of product {products[j]}"
+                        + f" Cost: {x[i,j].solution_value()*cost_coeff[i][j]}"
                     )
-        print(f"Total cost = {total_cost}\n")
     else:
         print("No solution found.")
 
