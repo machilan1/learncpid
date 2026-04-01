@@ -38,12 +38,7 @@ def main():
     # Constraints
     # 預算要小於10
 
-    tmp = []
-    for i in range(num_cities):
-        for j in range(num_buildings):
-            tmp.append(x[i,j]*costs[i][j])
-
-    solver.Add(solver.Sum(tmp)<=capital)
+    solver.Add(solver.Sum([x[i,j]*costs[i][j] for i in range(num_cities) for j in range(num_buildings)])<=capital)
 
     # 公司頂多蓋一個新warehouse
 
@@ -55,13 +50,11 @@ def main():
 
 
     # Objective
-
     
-
     objective_terms = []
     for i in range(num_cities):
         for j in range(num_buildings):
-            objective_terms.append(values[i][j] * x[i, j])
+            objective_terms.append(x[i, j] * values[i][j])
     solver.Maximize(solver.Sum(objective_terms))
 
     # Solve
