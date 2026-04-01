@@ -53,10 +53,13 @@ def main():
 
     # Print solution.
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
+        total_cost = 0
         print(f"Total value = {solver.Objective().Value()}\n")
         for i in range(num_projects):
             if x[i].solution_value() > 0.5:
+                total_cost += cost_coeff[i]
                 print(f"Project {projects[i]} is picked." + f" Cost: {cost_coeff[i]}")
+        print(f"Total cost = {total_cost}\n")
     else:
         print("No solution found.")
 
