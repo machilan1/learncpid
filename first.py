@@ -3,22 +3,18 @@ from typing import List
 from ortools.linear_solver import pywraplp
 
 
-
 def main():
     # Data
 
-    cities : List[str] = ["LA","SF"]
-    buildings : List[str] = ["factory", "warehouse"]
+    cities: List[str] = ["LA", "SF"]
+    buildings: List[str] = ["factory", "warehouse"]
     capital = 10
-
 
     num_cities = len(cities)
     num_buildings = len(buildings)
 
-    costs = [[6,5],[3,2]]
-    values = [[9,6],[5,4]]
-
-
+    costs = [[6, 5], [3, 2]]
+    values = [[9, 6], [5, 4]]
 
     # Solver
     # Create the mip solver with the SCIP backend.
@@ -38,19 +34,27 @@ def main():
     # Constraints
     # 預算要小於10
 
-    solver.Add(solver.Sum([x[i,j]*costs[i][j] for i in range(num_cities) for j in range(num_buildings)])<=capital)
+    solver.Add(
+        solver.Sum(
+            [
+                x[i, j] * costs[i][j]
+                for i in range(num_cities)
+                for j in range(num_buildings)
+            ]
+        )
+        <= capital
+    )
 
     # 公司頂多蓋一個新warehouse
 
-    solver.Add(solver.Sum([x[i,1] for i in range(num_cities)])<=1)
+    solver.Add(solver.Sum([x[i, 1] for i in range(num_cities)]) <= 1)
 
     # 有蓋factory的地方才蓋warehouse
     for i in range(num_cities):
-        solver.Add(x[i,1]<=x[i,0])
-
+        solver.Add(x[i, 1] <= x[i, 0])
 
     # Objective
-    
+
     objective_terms = []
     for i in range(num_cities):
         for j in range(num_buildings):
@@ -68,7 +72,10 @@ def main():
             for j in range(num_buildings):
                 # Test if x[i,j] is 1 (with tolerance for floating point arithmetic).
                 if x[i, j].solution_value() > 0.5:
-                    print(f"City {cities[i]} build {buildings[j]}." + f" Cost: {costs[i][j]}")
+                    print(
+                        f"City {cities[i]} build {buildings[j]}."
+                        + f" Cost: {costs[i][j]}"
+                    )
     else:
         print("No solution found.")
 
