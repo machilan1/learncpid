@@ -6,15 +6,15 @@ from ortools.linear_solver import pywraplp
 def main():
     # Data
 
-    cities: List[str] = ["LA", "SF"]
+    cities: List[str] = ["LA", "SF" , "SD"]
     buildings: List[str] = ["factory", "warehouse"]
     capital = 10
 
     num_cities = len(cities)
     num_buildings = len(buildings)
 
-    costs = [[6, 5], [3, 2]]
-    values = [[9, 6], [5, 4]]
+    costs = [[6, 5], [3, 2], [4,5]]
+    values = [[9, 6], [5, 4], [7,3]]
 
     # Solver
     # Create the mip solver with the SCIP backend.
