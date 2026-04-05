@@ -6,17 +6,12 @@ from ortools.linear_solver import pywraplp
 def main():
     # Data
 
-    machines = ["1", "2"]
-    products = ["tow", "stabilizer"]
-    num_machines = len(machines)
+    products = ["1", "2"]
     num_products = len(products)
 
-    cost_coeff = [
-        [3.2, 2.4],
-        [2, 3],
-    ]
+    cost_coeff = [[1, 0], [0, 2], [3, 2]]
 
-    profit_coeff = [130, 150]
+    profit_coeff = [3000, 5000]
 
     # Solver
     # Create the mip solver with the SCIP backend.
@@ -30,24 +25,26 @@ def main():
     # if worker i is assigned to task j.
     x = {}
     infinity = solver.infinity()
-    for i in range(num_machines):
-        for j in range(num_products):
-            x[i, j] = solver.IntVar(0, infinity, "")
+    for i in range(num_products):
+        x[i] = solver.IntVar(0, infinity, "")
 
     # Constraints
-    # Machine 1 will be available for 16 hours over the next two days
+    # 產品1 在工廠1的生產耗時不超過4小時
+    solver.Add(x[0] * 1 <= 4)
 
-    solver.Add(sum(x[0, j] * cost_coeff[0][j] for j in range(num_products)) <= 16)
+    # 產品2 在工廠2的生產耗時不超過12小時
+    solver.Add(x[1] * 2 <= 12)
 
-    # Machine 2 will be available for 15 hours
-    solver.Add(sum(x[1, j] * cost_coeff[1][j] for j in range(num_products)) <= 15)
+    # 產品1 及 產品2 在工廠3消耗的總時間不超過18小時
+
+    solver.Add(x[0] * 3 + x[1] * 2 <= 18)
 
     # Objective
 
     objective_terms = []
-    for i in range(num_machines):
-        for j in range(num_products):
-            objective_terms.append(x[i, j] * profit_coeff[j])
+
+    for i in range(num_products):
+        objective_terms.append(x[i] * profit_coeff[i])
     solver.Maximize(solver.Sum(objective_terms))
 
     # Solve
@@ -57,13 +54,11 @@ def main():
     # Print solution.
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
         print(f"Total value = {solver.Objective().Value()}\n")
-        for i in range(num_machines):
-            for j in range(num_products):
-                if x[i, j].solution_value() > 0:
-                    print(
-                        f"Machine {machines[i]} is picked for producing {x[i,j].solution_value()} units of product {products[j]}"
-                        + f" Cost: {x[i,j].solution_value()*cost_coeff[i][j]}"
-                    )
+        for i in range(num_products):
+            if x[i].solution_value() > 0:
+                print(
+                    f"Product {products[i]} has been produced with  {x[i].solution_value()} units"
+                )
     else:
         print("No solution found.")
 
