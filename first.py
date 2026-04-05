@@ -3,6 +3,11 @@ from typing import List
 from ortools.linear_solver import pywraplp
 
 
+# User decides
+# 1. Minimize or Maximize 
+# 2. Criteria of limit
+# 3. Penalty 
+
 def main():
     # Data
 
