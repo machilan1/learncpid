@@ -30,11 +30,21 @@ def main():
     # Variables
     # x[i,j,d] is an array of 0-1 variables, which will be 1
     # if worker i is assigned to task j in day d.
+    infinity = solver.infinity()
     x = {}
     for i in range(num_nurses):
         for j in range(num_shifts):
             for d in range(num_days):
                 x[i, j, d] = solver.IntVar(0, 1, "")
+    # y[i] is the surplus variable of total work shift person i takes.
+    y = {}
+    for i in range(num_nurses):
+        y[i] = solver.IntVar(0, infinity, "")
+
+    # z[i] is the deficit variable of total work shift person i takes.
+    z = {}
+    for i in range(num_nurses):
+        z[i] = solver.IntVar(0, infinity, "")
 
     # Constraints
     # Each shift is assigned to a single nurse per day.
@@ -45,15 +55,15 @@ def main():
     # Each nurse works at most one shift per day.
     for i in range(num_nurses):
         for d in range(num_days):
-            solver.Add(sum([x[i, j, d] for j in range(num_shifts)]) == 1)
+            solver.Add(sum([x[i, j, d] for j in range(num_shifts)]) <= 1)
 
     # 每個護士平均上班
-    least_level = (num_shifts * num_days) // num_nurses
-
     for i in range(num_nurses):
         solver.Add(
             sum([x[i, j, d] for j in range(num_shifts) for d in range(num_days)])
-            >= least_level
+            - y[i]
+            + z[i]
+            == (num_days * num_shifts) // num_nurses
         )
 
     # Objective
@@ -61,8 +71,8 @@ def main():
     objective_terms = [x[0, 0, 0]]
 
     # for i in range(num):
-    #     objective_terms.append(x[i] * profit_coeff[i])
-    solver.Maximize(x[0, 0, 0] * 6)
+    # objective_terms.append(x[i] * profit_coeff[i])
+    solver.Minimize(solver.Sum([y[i] * 3 + z[i] * 10 for i in range(num_nurses)]))
 
     # Solve
     print(f"Solving with {solver.SolverVersion()}")
@@ -72,14 +82,13 @@ def main():
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
         print(f"Total value = {solver.Objective().Value()}\n")
         for d in range(num_days):
+            print(f"Day {days[d]} : ")
             for j in range(num_shifts):
                 for i in range(num_nurses):
-                    if x[i].solution_value() > 0:
-                        print(
-                            f"Days {days[d]} has been produced with  {x[i].solution_value()} units"
-                        )
+                    if x[i, j, d].solution_value() > 0:
+                        print(f"Employee {nurses[i]} take shift {shifts[j]}")
+            print("\n")
     else:
-        print(x)
         print("No solution found.")
 
 
