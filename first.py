@@ -4,19 +4,21 @@ from ortools.linear_solver import pywraplp
 
 
 # User decides
-# 1. Minimize or Maximize 
+# 1. Minimize or Maximize
 # 2. Criteria of limit
-# 3. Penalty 
+# 3. Penalty
+
 
 def main():
     # Data
 
-    products = ["1", "2"]
-    num_products = len(products)
+    nurses = ["A", "B", "C", "D"]
+    shifts = ["早", "中", "晚"]
+    days = ["1", "2", "3"]
 
-    cost_coeff = [[1, 0], [0, 2], [3, 2]]
-
-    profit_coeff = [3000, 5000]
+    num_nurses = len(nurses)
+    num_shifts = len(shifts)
+    num_days = len(days)
 
     # Solver
     # Create the mip solver with the SCIP backend.
@@ -26,31 +28,41 @@ def main():
         return
 
     # Variables
-    # x[i] is an array of 0-1 variables, which will be 1
-    # if worker i is assigned to task j.
+    # x[i,j,d] is an array of 0-1 variables, which will be 1
+    # if worker i is assigned to task j in day d.
     x = {}
-    infinity = solver.infinity()
-    for i in range(num_products):
-        x[i] = solver.IntVar(0, infinity, "")
+    for i in range(num_nurses):
+        for j in range(num_shifts):
+            for d in range(num_days):
+                x[i, j, d] = solver.IntVar(0, 1, "")
 
     # Constraints
-    # 產品1 在工廠1的生產耗時不超過4小時
-    solver.Add(x[0] * 1 <= 4)
+    # Each shift is assigned to a single nurse per day.
+    for j in range(num_shifts):
+        for d in range(num_days):
+            solver.Add(sum([x[i, j, d] for i in range(num_nurses)]) == 1)
 
-    # 產品2 在工廠2的生產耗時不超過12小時
-    solver.Add(x[1] * 2 <= 12)
+    # Each nurse works at most one shift per day.
+    for i in range(num_nurses):
+        for d in range(num_days):
+            solver.Add(sum([x[i, j, d] for j in range(num_shifts)]) == 1)
 
-    # 產品1 及 產品2 在工廠3消耗的總時間不超過18小時
+    # 每個護士平均上班
+    least_level = (num_shifts * num_days) // num_nurses
 
-    solver.Add(x[0] * 3 + x[1] * 2 <= 18)
+    for i in range(num_nurses):
+        solver.Add(
+            sum([x[i, j, d] for j in range(num_shifts) for d in range(num_days)])
+            >= least_level
+        )
 
     # Objective
 
-    objective_terms = []
+    objective_terms = [x[0, 0, 0]]
 
-    for i in range(num_products):
-        objective_terms.append(x[i] * profit_coeff[i])
-    solver.Maximize(solver.Sum(objective_terms))
+    # for i in range(num):
+    #     objective_terms.append(x[i] * profit_coeff[i])
+    solver.Maximize(x[0, 0, 0] * 6)
 
     # Solve
     print(f"Solving with {solver.SolverVersion()}")
@@ -59,12 +71,15 @@ def main():
     # Print solution.
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
         print(f"Total value = {solver.Objective().Value()}\n")
-        for i in range(num_products):
-            if x[i].solution_value() > 0:
-                print(
-                    f"Product {products[i]} has been produced with  {x[i].solution_value()} units"
-                )
+        for d in range(num_days):
+            for j in range(num_shifts):
+                for i in range(num_nurses):
+                    if x[i].solution_value() > 0:
+                        print(
+                            f"Days {days[d]} has been produced with  {x[i].solution_value()} units"
+                        )
     else:
+        print(x)
         print("No solution found.")
 
 
