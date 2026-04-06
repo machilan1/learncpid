@@ -12,9 +12,9 @@ from ortools.linear_solver import pywraplp
 def main():
     # Data
 
-    nurses = ["A", "B", "C", "D"]
-    shifts = ["早", "中", "晚"]
-    days = ["1", "2", "3"]
+    nurses = ["A", "B", "C", "D", "E", "F"]
+    shifts = ["早", "中", "晚", "晚2"]
+    days = ["1", "2", "3","4","5"]
 
     num_nurses = len(nurses)
     num_shifts = len(shifts)
@@ -54,17 +54,17 @@ def main():
     # Each shift is assigned to a single nurse per day.
     for j in range(num_shifts):
         for d in range(num_days):
-            solver.Add(sum([x[i, j, d] for i in range(num_nurses)]) == 1)
+            solver.Add(sum(x[i, j, d] for i in range(num_nurses)) == 1)
 
     # Each nurse works at most one shift per day.
     for i in range(num_nurses):
         for d in range(num_days):
-            solver.Add(sum([x[i, j, d] for j in range(num_shifts)]) <= 1)
+            solver.Add(sum(x[i, j, d] for j in range(num_shifts)) <= 1)
 
     # 每個護士平均上班
     for i in range(num_nurses):
         solver.Add(
-            sum([x[i, j, d] for j in range(num_shifts) for d in range(num_days)])
+            sum(x[i, j, d] for j in range(num_shifts) for d in range(num_days))
             - y[i]
             + z[i]
             == (num_days * num_shifts) // num_nurses
@@ -74,7 +74,7 @@ def main():
 
     solver.Minimize(
         solver.Sum(
-            [y[i] * surplus_penalty + z[i] * deficit_penalty for i in range(num_nurses)]
+            y[i] * surplus_penalty + z[i] * deficit_penalty for i in range(num_nurses)
         )
     )
 
