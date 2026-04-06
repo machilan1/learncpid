@@ -20,6 +20,9 @@ def main():
     num_shifts = len(shifts)
     num_days = len(days)
 
+    surplus_penalty = 3
+    deficit_penalty = 10
+
     # Solver
     # Create the mip solver with the SCIP backend.
     solver = pywraplp.Solver.CreateSolver("SCIP")
@@ -36,6 +39,7 @@ def main():
         for j in range(num_shifts):
             for d in range(num_days):
                 x[i, j, d] = solver.IntVar(0, 1, "")
+
     # y[i] is the surplus variable of total work shift person i takes.
     y = {}
     for i in range(num_nurses):
@@ -68,11 +72,11 @@ def main():
 
     # Objective
 
-    objective_terms = [x[0, 0, 0]]
-
-    # for i in range(num):
-    # objective_terms.append(x[i] * profit_coeff[i])
-    solver.Minimize(solver.Sum([y[i] * 3 + z[i] * 10 for i in range(num_nurses)]))
+    solver.Minimize(
+        solver.Sum(
+            [y[i] * surplus_penalty + z[i] * deficit_penalty for i in range(num_nurses)]
+        )
+    )
 
     # Solve
     print(f"Solving with {solver.SolverVersion()}")
