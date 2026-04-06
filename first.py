@@ -86,7 +86,7 @@ def main():
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
         print(f"Total value = {solver.Objective().Value()}\n")
         for d in range(num_days):
-            print(f"Day {days[d]} : ")
+            print(f"Day {days[d]}: ")
             for j in range(num_shifts):
                 for i in range(num_nurses):
                     if x[i, j, d].solution_value() > 0:
